@@ -1,0 +1,19 @@
+# Fichiers et dossiers de contrôle de version
+.git
+.gitignore
+
+# Dossiers et fichiers spécifiques de Dart
+.dart_tool/
+.buildlog
+.packages
+
+# Fichiers de configuration et de documentation inutiles dans l'image
+CHANGELOG.md
+README.md
+analysis_options.yaml
+firebase.json
+
+# Autres fichiers et dossiers inutiles
+Dockerfile
+*.md
+*.json

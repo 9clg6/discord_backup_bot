@@ -1,0 +1,36 @@
+name: dibo
+description: A simple command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+publish_to: none
+environment:
+  sdk: ^3.2.6
+
+dependencies:
+  nyxx:
+    git:
+      url: https://github.com/abitofevrything/nyxx.git
+      ref: patch/hang-status
+  json_annotation: ^4.8.1
+  nyxx_extensions:
+    git:
+      url: https://github.com/nyxx-discord/nyxx_extensions.git
+      ref: dev
+  dotenv: ^4.2.0
+  nyxx_commands: ^6.0.2
+  collection: ^1.18.0
+  supabase: ^2.0.8
+  logger: ^2.2.0
+dependency_overrides:
+  nyxx: 
+    git:
+      url: https://github.com/abitofevrything/nyxx.git
+      ref: patch/hang-status
+
+dev_dependencies:
+  lints: ^2.1.0
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+
+assets:
+  - .env
