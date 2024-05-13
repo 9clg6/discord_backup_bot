@@ -21,18 +21,14 @@ class FileLoggerOutput extends LogOutput {
     final String dateString =
         "${currentDate.day}-${currentDate.month}-${currentDate.year}";
 
-    final File file = File(
-      serverId != null
-          ? 'logs/log_${serverId}_$dateString.txt'
-          : 'logs/log_$dateString.txt',
-    );
+    final File file = File('logs/log_$serverId.txt');
 
     if (!(await file.exists())) {
       await file.create(recursive: true);
     }
 
     file.writeAsStringSync(
-      "[${currentDate.hour}:${currentDate.minute}] $message\n",
+      "[$dateString | ${currentDate.hour}:${currentDate.minute}] $message\n",
       mode: FileMode.append,
     );
   }

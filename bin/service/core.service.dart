@@ -1,9 +1,11 @@
 import 'package:collection/collection.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:nyxx/src/client.dart';
 
 import '../exceptions/exceptions.dart';
 import '../share/share.constants.dart';
 import '../use_case/enum/parameters.enum.dart';
+import '../utils/printer.util.dart';
 import 'export.service.dart';
 import 'restartable_timer.dart';
 
@@ -123,6 +125,12 @@ class CoreService {
       );
 
       _isServerInitMap[server["serverId"]] = true;
+
+      await writeMessageWithChannelId(
+        server["channelId"] as int,
+        server["serverId"] as int,
+        "💡 Le bot a été mis à jour... Redémarrage du processus de sauvegarde en arrière-plan.",
+      );
     }
   }
 }
