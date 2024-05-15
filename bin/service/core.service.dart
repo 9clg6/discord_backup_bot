@@ -129,7 +129,7 @@ class CoreService {
       await writeMessageWithChannelId(
         server["channelId"] as int,
         server["serverId"] as int,
-        "💡 Le bot a été mis à jour... Redémarrage du processus de sauvegarde en arrière-plan.",
+        "💡 Démarrage du processus de sauvegarde en arrière-plan.",
       );
     }
   }

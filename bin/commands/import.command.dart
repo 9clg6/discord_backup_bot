@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commands/nyxx_commands.dart';
 
 import '../entity/guild_export.entity.dart';
@@ -32,6 +33,14 @@ final importCommand = ChatCommand(
       logger.Level.info,
       "🚴‍♂️ [${DateTime.now().toIso8601String()}] Démarrage du processus d'import ",
     );
+
+    if (((await context.guild?.fetchChannels())?.length ?? 0) > 4) {
+      await writeMessage(
+        context,
+        "** ❌ Vous ne pouvez pas importer un serveur si celui-ci possède déjà de nombreux channels. Afin d'éviter d'importer un serveur sur un serveur existant. (Nombre de channels maximum autorisé : 4)  **",
+      );
+      return;
+    }
 
     await writeMessage(
       context,

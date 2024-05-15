@@ -34,11 +34,7 @@ Future<void> main(List<String> arguments) async {
     ),
   );
 
-  client.onReady.listen((ReadyEvent readyEvent) async {
-    await CoreService().initializeAtStart(client);
-
-    print('-----Ready-----');
-  });
+  await CoreService().initializeAtStart(client);
 }
 
 ///
