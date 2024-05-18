@@ -1,4 +1,3 @@
-import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commands/nyxx_commands.dart';
 
 import '../service/export.service.dart';
@@ -18,22 +17,17 @@ final exportCommand = ChatCommand(
   id(
     'export',
     (
-      ChatContext context, [
+      ChatContext context,
+      @Description("Clé publique RSA permettant le chiffrement des données")
+      String publicKey, [
       @UseConverter(parameterTypeConverter)
-      @Description("Paramètres optionnels à ajouter pour l'export")
-      Parameters? parameters,
+      @Description("Paramètre optionnel à ajouter pour l'export")
+      Parameters parameters = Parameters.noParameter,
     ]) async {
-      parameters ??= await context.getSelection<Parameters>(
-        Parameters.values,
-        authorOnly: true,
-        MessageBuilder(
-          content: "Sélectionnes les paramètres OPTIONNELS d'export",
-        ),
-      );
-
       await ExportService(
         context.guild?.id.value ?? -1,
         context.channel.id.value,
+        publicKey: publicKey,
       ).processExport(parameters);
     },
   ),

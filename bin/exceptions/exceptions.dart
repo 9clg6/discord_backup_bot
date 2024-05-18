@@ -44,10 +44,19 @@ class CreateRoleException implements Exception {
 }
 
 ///
-/// [InitializationResult]
+/// [InitializationException]
 ///
-class InitializationResult implements Exception {
+class InitializationException implements Exception {
   String cause;
 
-  InitializationResult(this.cause);
+  InitializationException(this.cause);
+}
+
+///
+/// [CancelBotException]
+///
+class CancelBotException implements Exception {
+  String cause;
+
+  CancelBotException(this.cause);
 }

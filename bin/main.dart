@@ -2,6 +2,7 @@ import 'package:dotenv/dotenv.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commands/nyxx_commands.dart';
 import 'package:supabase/supabase.dart';
+import 'commands/cancel.command.dart';
 import 'commands/export.command.dart';
 import 'commands/import.command.dart';
 import 'commands/initialize.command.dart';
@@ -48,6 +49,7 @@ CommandsPlugin initializeCommands() {
     ),
   )
     ..addCommand(initializeCommand)
+    ..addCommand(cancelCommand)
     ..addCommand(exportCommand)
     ..addCommand(importCommand);
 }

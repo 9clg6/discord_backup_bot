@@ -1,14 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:nyxx/nyxx.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:nyxx_commands/nyxx_commands.dart';
+import 'package:pointycastle/asymmetric/api.dart';
 
 import '../entity/guild_export.entity.dart';
 import '../service/logger.service.dart';
 import '../share/share.constants.dart';
 import '../use_case/import/import_chan.use_case.dart';
 import '../use_case/import/import_roles.use_case.dart';
+import '../utils/key.util.dart';
 import '../utils/printer.util.dart';
 import 'package:logger/logger.dart' as logger;
 
@@ -28,10 +30,15 @@ final importCommand = ChatCommand(
     @Description('Identifiant du serveur à importer')
     @Name('id')
     String serverIdToImport,
+    @Description('Clé privée permettant de déchiffrer la sauvegarde')
+    @Name('privateKey')
+    String privateKey,
   ) async {
-    LoggerService(context.guild?.id.value ?? -1).writeLog(
+    final int serverId = context.guild?.id.value ?? -1;
+
+    LoggerService(serverId).writeLog(
       logger.Level.info,
-      "🚴‍♂️ [${DateTime.now().toIso8601String()}] Démarrage du processus d'import ",
+      "🚴‍♂️ Démarrage du processus d'import ",
     );
 
     if (((await context.guild?.fetchChannels())?.length ?? 0) > 4) {
@@ -42,11 +49,6 @@ final importCommand = ChatCommand(
       return;
     }
 
-    await writeMessage(
-      context,
-      "🚴‍♂️ Démarrage du processus d'import...",
-    );
-
     final int? parsedArg = int.tryParse(serverIdToImport);
     if (parsedArg == null) {
       await writeMessage(
@@ -55,6 +57,25 @@ final importCommand = ChatCommand(
       );
       return;
     }
+
+    try {
+      RSAKeyParser().parse(formatPrivatePem(privateKey)) as RSAPrivateKey;
+    } catch (e) {
+      LoggerService(serverId).writeLog(
+        logger.Level.error,
+        "❌ Clé privée RSA au mauvais format ($privateKey)",
+      );
+      await writeMessage(
+        context,
+        "❌ La clé privée RSA ne possède pas le bon format, vérifiez la ou regénérez la.",
+      );
+      return;
+    }
+
+    await writeMessage(
+      context,
+      "🚴‍♂️ Démarrage du processus d'import...",
+    );
 
     final List<Map<String, dynamic>> lastDoc = await supabase
         .from(saveCollectionKey)
@@ -71,12 +92,30 @@ final importCommand = ChatCommand(
 
     final Map<String, dynamic> lastSave = lastDoc.first;
 
-    List<int> decodedServer = gzip.decode(base64.decode(lastSave['server']));
+    // Reformater la clé privée
+    final pK =
+        RSAKeyParser().parse(formatPrivatePem(privateKey)) as RSAPrivateKey;
+
+    // Déchiffrer la clé AES avec la clé privée RSA
+    final rsaDecrypter = Encrypter(RSA(privateKey: pK));
+    final encryptedAesKey = Encrypted.fromBase64(lastSave['encryptedAes']!);
+
+    // Corriger la clé de chiffrement pour que ce soit bien une chaîne base64
+    final aesKeyBase64 = rsaDecrypter.decrypt(encryptedAesKey);
+    final decryptedAesKey = Key.fromBase64(aesKeyBase64);
+
+    // Déchiffrer les données avec AES
+    final aesDecrypter = Encrypter(AES(decryptedAesKey, mode: AESMode.cbc));
+    final encryptedData = Encrypted.fromBase64(lastSave['server']!);
+
+    final decryptedData = aesDecrypter.decrypt(encryptedData, iv: IV.fromBase64(lastSave['iv']!));
+
+    List<int> decodedServer = gzip.decode(base64.decode(decryptedData));
     Map<String, dynamic> jsonServer = jsonDecode(utf8.decode(decodedServer));
 
     final GuildExport guildExport = GuildExport.fromJson(jsonServer);
 
-    //Clé : ID Rôle importé, Valeur: ID créé sur ce serveur
+    // Clé : ID Rôle importé, Valeur: ID créé sur ce serveur
     final Map<int, int>? importedRoles =
         await ImportRolesUseCase.importRoles(guildExport.roles, context);
 

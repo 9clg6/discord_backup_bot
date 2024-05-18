@@ -1,9 +1,13 @@
-import 'package:nyxx_commands/nyxx_commands.dart';
-
+import 'package:encrypt/encrypt.dart';
+import "package:nyxx_commands/nyxx_commands.dart";
+import 'package:pointycastle/pointycastle.dart';
 import '../exceptions/exceptions.dart';
 import '../service/core.service.dart';
+import '../service/logger.service.dart';
 import '../use_case/enum/parameters.enum.dart';
+import '../utils/key.util.dart';
 import '../utils/printer.util.dart';
+import 'package:logger/logger.dart' as logger;
 
 ///
 /// INITIALISE COMMAND
@@ -19,10 +23,12 @@ final ChatCommand initializeCommand = ChatCommand(
   id(
     'initialize',
     (
-      ChatContext context, [
+      ChatContext context,
+      @Description("Clé publique RSA permettant le chiffrement des données")
+      String publicKey, [
       @UseConverter(parameterTypeConverter)
       @Description("Paramètre optionnel à ajouter pour l'export")
-      Parameters? parameters,
+      Parameters parameters = Parameters.noParameter,
     ]) async {
       final int? guildId = context.guild?.id.value;
       if (guildId == null) return;
@@ -33,20 +39,36 @@ final ChatCommand initializeCommand = ChatCommand(
       }
 
       try {
+        RSAKeyParser().parse(formatPublicPem(publicKey)) as RSAPublicKey;
+      } catch (e) {
+        LoggerService(guildId).writeLog(
+          logger.Level.error,
+          "❌ Clé public RSA au mauvais format ($publicKey)",
+        );
+        await writeMessage(
+          context,
+          "❌ La clé public RSA ne possède pas le bon format, vérifiez la ou regénérez la.",
+        );
+        return;
+      }
+
+      try {
         await CoreService().initialize(
           guildId,
-          context.channel.id.value,
-          parameters?.code,
+          publicKey: publicKey,
+          channelId: context.channel.id.value,
+          code: parameters.code,
         );
-      } on InitializationResult catch (e) {
+      } on InitializationException catch (e) {
         await writeMessage(context, e.cause);
         return;
       }
 
       CoreService().startCron(
-        parameters ?? Parameters.noParameter,
+        parameters,
         context.guild?.id.value ?? -1,
         context.channel.id.value,
+        publicKey: publicKey,
       );
 
       await writeMessage(

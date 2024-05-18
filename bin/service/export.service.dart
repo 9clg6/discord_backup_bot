@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:encrypt/encrypt.dart';
 import 'package:nyxx/nyxx.dart';
 import '../entity/guild_export.entity.dart';
 import '../share/share.constants.dart';
@@ -8,9 +9,11 @@ import '../use_case/enum/parameters.enum.dart';
 import '../use_case/export/fetch_channels.use_case.dart';
 import '../use_case/export/fetch_roles.use_case.dart';
 import '../utils/elapsed.util.dart';
+import '../utils/key.util.dart';
 import '../utils/printer.util.dart';
 import 'logger.service.dart';
 import 'package:logger/logger.dart' as logger;
+import 'package:pointycastle/asymmetric/api.dart';
 
 ///
 /// [ExportService]
@@ -22,24 +25,30 @@ class ExportService {
   /// Server id
   final int serverId;
 
+  /// RSA public key
+  final String publicKey;
+
   ///
   /// Export service
   ///
   ExportService._(
     this.serverId,
     this.channelId,
+    this.publicKey,
   );
 
   ///
-  /// Fatory
+  /// Factory
   ///
   factory ExportService(
     int serverId,
-    int channelId,
-  ) =>
+    int channelId, {
+    required String publicKey,
+  }) =>
       ExportService._(
         serverId,
         channelId,
+        publicKey,
       );
 
   ///
@@ -48,9 +57,11 @@ class ExportService {
   Future<void> processExport(Parameters parameters) async {
     final Stopwatch sw = Stopwatch();
 
+    late RSAPublicKey pK;
+
     LoggerService(serverId).writeLog(
       logger.Level.info,
-      "🚴‍♂️ [${DateTime.now().toIso8601String()}] Démarrage du processus d'export",
+      "🚴‍♂️ Démarrage du processus d'export",
     );
 
     await writeMessageWithChannelId(
@@ -91,19 +102,51 @@ class ExportService {
       );
 
       try {
-        await supabase.from(saveCollectionKey).upsert({
-          "server": base64.encode(
+        pK = RSAKeyParser().parse(formatPublicPem(publicKey)) as RSAPublicKey;
+      } catch (e) {
+        LoggerService(serverId).writeLog(
+          logger.Level.error,
+          "❌ Clé public RSA au mauvais format ($publicKey)",
+        );
+        await writeMessageWithChannelId(
+          channelId,
+          serverId,
+          "❌ La clé public RSA ne possède pas le bon format, vérifiez la ou regénérez la.",
+        );
+        return;
+      }
+
+      try {
+        final aesKey = Key.fromSecureRandom(32); // AES 256 bits
+        final iv = IV.fromSecureRandom(16); // IV 128 bits
+
+        final Encrypter publicKeyEncrypter = Encrypter(RSA(publicKey: pK));
+        final Encrypter aesEncrypter = Encrypter(
+          AES(
+            aesKey,
+            mode: AESMode.cbc,
+          ),
+        );
+
+        final encryptedAesKey = publicKeyEncrypter.encrypt(aesKey.base64);
+
+        // Ajout du IV dans le stockage pour l'utiliser lors de la décryption
+        final encryptedData = aesEncrypter.encrypt(
+          base64.encode(
             gzip.encode(
-              utf8.encode(
-                jsonEncode(
-                  guildExport.toJson(),
-                ),
-              ),
+              utf8.encode(jsonEncode(guildExport.toJson())),
             ),
           ),
+          iv: iv,
+        );
+
+        await supabase.from(saveCollectionKey).upsert({
+          "server": encryptedData.base64,
           "serverName": guildExport.guildName,
           "id": "${DateTime.now().millisecondsSinceEpoch}",
           "serverId": guildExport.guildId,
+          "encryptedAes": encryptedAesKey.base64,
+          "iv": iv.base64,
         });
 
         LoggerService(serverId).writeLog(

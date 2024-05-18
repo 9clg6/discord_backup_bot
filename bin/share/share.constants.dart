@@ -13,5 +13,5 @@ const String discordApiKeyKey = 'DISCORD_API_KEY';
 const String supabaseApiKeyKey = 'SUPABASE_API_KEY';
 const String supabaseDatabaseAddress = 'SUPABASE_ADDRESS';
 
-const String saveCollectionKey = 'serverSave2';
+const String saveCollectionKey = 'save';
 const String initCollection = 'initialization';
