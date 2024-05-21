@@ -41,10 +41,19 @@ The fields to be set are :
 
 ## 💡 How to use 
 
+### Initilization / Export
+
 Once you've set up the environment, all you have to do is type `/initialize [publicKey]` in a text channel and your backup will be scheduled every day at the time you sent the command.
 You have to provide your public key for the encryption, in **512 bits PKCS8**.
 
 Or you can also export your server, without scheduling a regular repeat, by typing the command `/export [publicKey]`.
+
+### Import
+
+
+To import your backup, simply call the command `/import [serverId] [privateKey]` where `[serverId]` is the identifier of the server you wish to restore (it can be found by enabling developer mode in your Discord settings) and `[privateKey]` is the private key (associated with the public key you provided to export or initialize the bot).
+
+# **⚠️⚠️ After each import, you must change the RSA key pair to secure the data. Each pair can only be used once, otherwise your new data may be exposed. ⚠️⚠️**
 
 ## 😀 Support
 
