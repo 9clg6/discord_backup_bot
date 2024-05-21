@@ -1,4 +1,5 @@
 
+
 This bot enables anyone to make backups of their Discord server(s) at configurable frequencies. It can also import these backups to rebuild the servers.
 Backup are encrypted with hybrid encryption (RSA/AES). 
 
@@ -39,9 +40,12 @@ The fields to be set are :
 
 ## 💡 How to use 
 
-Once you've set up the environment, all you have to do is type `/initialize` in a text channel and your backup will be scheduled every day at the time you sent the command.
-You have to provide your public key for the encryption.
+Once you've set up the environment, all you have to do is type `/initialize [publicKey]` in a text channel and your backup will be scheduled every day at the time you sent the command.
+You have to provide your public key for the encryption, in **512 bits PKCS8**.
+
+Or you can also export your server, without scheduling a regular repeat, by typing the command `/export [publicKey]`.
 
 ## 😀 Support
 
 I will gladly accept your MRs :) 
+In particular for key parsing, cleaning and management of other PKCS standards
