@@ -43,7 +43,7 @@ class CoreService {
       isInit = true;
     } else if (_isServerInitMap[serverId] == null) {
       final Map<String, dynamic>? lastDoc =
-          (await supabase.from(initCollection).select().eq(
+          (await supabase.from(initCollectionKey).select().eq(
                     'serverId',
                     serverId,
                   ))
@@ -101,7 +101,7 @@ class CoreService {
     String? publicKey,
   }) async {
     try {
-      await supabase.from(initCollection).upsert({
+      await supabase.from(initCollectionKey).upsert({
         "serverId": id,
         "channelId": channelId,
         "parameter": code,
@@ -120,7 +120,7 @@ class CoreService {
   ///
   ///TODO REMOVAL NOT WORKING
   Future<void> removeGuild(int serverId) async {
-    return supabase.from(initCollection).delete().eq('serverId', serverId);
+    return supabase.from(initCollectionKey).delete().eq('serverId', serverId);
   }
 
   ///
@@ -128,7 +128,7 @@ class CoreService {
   ///
   Future<void> initializeAtStart(NyxxGateway client) async {
     final List<Map<String, dynamic>> initializedServer =
-        await supabase.from(initCollection).select();
+        await supabase.from(initCollectionKey).select();
 
     for (Map<String, dynamic> server in initializedServer) {
       final int serverId = server["serverId"] as int;

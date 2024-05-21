@@ -106,7 +106,7 @@ class ExportService {
       } catch (e) {
         LoggerService(serverId).writeLog(
           logger.Level.error,
-          "❌ Clé public RSA au mauvais format ($publicKey)",
+          "❌ Clé public RSA au mauvais format ($e)",
         );
         await writeMessageWithChannelId(
           channelId,
@@ -117,10 +117,12 @@ class ExportService {
       }
 
       try {
-        final aesKey = Key.fromSecureRandom(32); // AES 256 bits
-        final iv = IV.fromSecureRandom(16); // IV 128 bits
+        final Key aesKey = Key.fromSecureRandom(aesLength);
+        final IV iv = IV.fromSecureRandom(ivConst);
 
-        final Encrypter publicKeyEncrypter = Encrypter(RSA(publicKey: pK));
+        final Encrypter pKEncrypter = Encrypter(
+          RSA(publicKey: pK),
+        );
         final Encrypter aesEncrypter = Encrypter(
           AES(
             aesKey,
@@ -128,10 +130,10 @@ class ExportService {
           ),
         );
 
-        final encryptedAesKey = publicKeyEncrypter.encrypt(aesKey.base64);
+        final Encrypted encryptedAesKey =
+            pKEncrypter.encrypt(aesKey.base64);
 
-        // Ajout du IV dans le stockage pour l'utiliser lors de la décryption
-        final encryptedData = aesEncrypter.encrypt(
+        final Encrypted encryptedData = aesEncrypter.encrypt(
           base64.encode(
             gzip.encode(
               utf8.encode(jsonEncode(guildExport.toJson())),
@@ -141,12 +143,12 @@ class ExportService {
         );
 
         await supabase.from(saveCollectionKey).upsert({
-          "server": encryptedData.base64,
-          "serverName": guildExport.guildName,
-          "id": "${DateTime.now().millisecondsSinceEpoch}",
-          "serverId": guildExport.guildId,
-          "encryptedAes": encryptedAesKey.base64,
-          "iv": iv.base64,
+          serverSaveKey: encryptedData.base64,
+          serverNameKey: guildExport.guildName,
+          idKey: "${DateTime.now().millisecondsSinceEpoch}",
+          serverIdKey: guildExport.guildId,
+          encryptedAesKeyKey: encryptedAesKey.base64,
+          ivKey: iv.base64,
         });
 
         LoggerService(serverId).writeLog(

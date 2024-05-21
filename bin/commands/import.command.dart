@@ -58,8 +58,10 @@ final importCommand = ChatCommand(
       return;
     }
 
+    RSAPrivateKey pK;
+
     try {
-      RSAKeyParser().parse(formatPrivatePem(privateKey)) as RSAPrivateKey;
+      pK = RSAKeyParser().parse(formatPrivatePem(privateKey)) as RSAPrivateKey;
     } catch (e) {
       LoggerService(serverId).writeLog(
         logger.Level.error,
@@ -80,7 +82,7 @@ final importCommand = ChatCommand(
     final List<Map<String, dynamic>> lastDoc = await supabase
         .from(saveCollectionKey)
         .select()
-        .eq('serverId', parsedArg);
+        .eq(serverIdKey, parsedArg);
 
     if (lastDoc.isEmpty) {
       await writeMessage(
@@ -90,34 +92,43 @@ final importCommand = ChatCommand(
       return;
     }
 
-    final Map<String, dynamic> lastSave = lastDoc.first;
+    final Map<String, dynamic>? lastSave = lastDoc.firstOrNull;
+    if (lastSave == null) return;
 
-    // Reformater la clé privée
-    final pK =
-        RSAKeyParser().parse(formatPrivatePem(privateKey)) as RSAPrivateKey;
+    final Encrypter rsaDecrypter = Encrypter(RSA(privateKey: pK));
+    final Encrypted encryptedAesKey = Encrypted.fromBase64(lastSave[encryptedAesKeyKey]!);
 
-    // Déchiffrer la clé AES avec la clé privée RSA
-    final rsaDecrypter = Encrypter(RSA(privateKey: pK));
-    final encryptedAesKey = Encrypted.fromBase64(lastSave['encryptedAes']!);
+    final String aesKeyBase64 = rsaDecrypter.decrypt(encryptedAesKey);
+    final Key decryptedAesKey = Key.fromBase64(aesKeyBase64);
 
-    // Corriger la clé de chiffrement pour que ce soit bien une chaîne base64
-    final aesKeyBase64 = rsaDecrypter.decrypt(encryptedAesKey);
-    final decryptedAesKey = Key.fromBase64(aesKeyBase64);
+    final Encrypter aesDecrypter = Encrypter(
+      AES(
+        decryptedAesKey,
+        mode: AESMode.cbc,
+      ),
+    );
+    final Encrypted encryptedData = Encrypted.fromBase64(lastSave[serverSaveKey]!);
 
-    // Déchiffrer les données avec AES
-    final aesDecrypter = Encrypter(AES(decryptedAesKey, mode: AESMode.cbc));
-    final encryptedData = Encrypted.fromBase64(lastSave['server']!);
+    final String decryptedData = aesDecrypter.decrypt(
+      encryptedData,
+      iv: IV.fromBase64(
+        lastSave[ivKey]!,
+      ),
+    );
 
-    final decryptedData = aesDecrypter.decrypt(encryptedData, iv: IV.fromBase64(lastSave['iv']!));
+    final List<int> decodedServer = gzip.decode(
+      base64.decode(decryptedData),
+    );
+    final Map<String, dynamic> json = jsonDecode(
+      utf8.decode(decodedServer),
+    );
 
-    List<int> decodedServer = gzip.decode(base64.decode(decryptedData));
-    Map<String, dynamic> jsonServer = jsonDecode(utf8.decode(decodedServer));
+    final GuildExport guildExport = GuildExport.fromJson(json);
 
-    final GuildExport guildExport = GuildExport.fromJson(jsonServer);
-
-    // Clé : ID Rôle importé, Valeur: ID créé sur ce serveur
-    final Map<int, int>? importedRoles =
-        await ImportRolesUseCase.importRoles(guildExport.roles, context);
+    final Map<int, int>? importedRoles = await ImportRolesUseCase.importRoles(
+      guildExport.roles,
+      context,
+    );
 
     ImportChanUseCase(importedRoles: importedRoles).importChanAndMessage(
       guildExport.chans,
