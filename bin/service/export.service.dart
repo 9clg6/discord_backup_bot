@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:encrypt/encrypt.dart';
 import 'package:nyxx/nyxx.dart';
+import '../entity/supabase/export.dart';
 import '../entity/guild_export.entity.dart';
 import '../share/share.constants.dart';
 import '../use_case/enum/parameters.enum.dart';
@@ -11,6 +12,7 @@ import '../use_case/export/fetch_roles.use_case.dart';
 import '../utils/elapsed.util.dart';
 import '../utils/key.util.dart';
 import '../utils/printer.util.dart';
+import 'database.service.dart';
 import 'logger.service.dart';
 import 'package:logger/logger.dart' as logger;
 import 'package:pointycastle/asymmetric/api.dart';
@@ -130,8 +132,7 @@ class ExportService {
           ),
         );
 
-        final Encrypted encryptedAesKey =
-            pKEncrypter.encrypt(aesKey.base64);
+        final Encrypted encryptedAesKey = pKEncrypter.encrypt(aesKey.base64);
 
         final Encrypted encryptedData = aesEncrypter.encrypt(
           base64.encode(
@@ -142,14 +143,16 @@ class ExportService {
           iv: iv,
         );
 
-        await supabase.from(saveCollectionKey).upsert({
-          serverSaveKey: encryptedData.base64,
-          serverNameKey: guildExport.guildName,
-          idKey: "${DateTime.now().millisecondsSinceEpoch}",
-          serverIdKey: guildExport.guildId,
-          encryptedAesKeyKey: encryptedAesKey.base64,
-          ivKey: iv.base64,
-        });
+        DatabaseService().saveData(
+          Export(
+            DateTime.now().millisecondsSinceEpoch,
+            guildExport.guildName!,
+            guildExport.guildId,
+            encryptedAesKey.base64,
+            iv.base64,
+            encryptedData.base64,
+          ),
+        );
 
         LoggerService(serverId).writeLog(
           logger.Level.info,

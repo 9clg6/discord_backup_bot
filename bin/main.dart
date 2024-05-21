@@ -1,12 +1,12 @@
 import 'package:dotenv/dotenv.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:nyxx_commands/nyxx_commands.dart';
-import 'package:supabase/supabase.dart';
 import 'commands/cancel.command.dart';
 import 'commands/export.command.dart';
 import 'commands/import.command.dart';
 import 'commands/initialize.command.dart';
 import 'service/core.service.dart';
+import 'service/database.service.dart';
 import 'share/share.constants.dart';
 
 ///
@@ -15,7 +15,7 @@ import 'share/share.constants.dart';
 Future<void> main(List<String> arguments) async {
   final env = DotEnv(includePlatformEnvironment: true)..load();
 
-  supabase = SupabaseClient(
+  DatabaseService(
     env[supabaseDatabaseAddress] ?? '',
     env[supabaseApiKeyKey] ?? '',
   );

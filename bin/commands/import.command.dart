@@ -6,6 +6,8 @@ import 'package:nyxx_commands/nyxx_commands.dart';
 import 'package:pointycastle/asymmetric/api.dart';
 
 import '../entity/guild_export.entity.dart';
+import '../entity/supabase/export.dart';
+import '../service/database.service.dart';
 import '../service/logger.service.dart';
 import '../share/share.constants.dart';
 import '../use_case/import/import_chan.use_case.dart';
@@ -79,12 +81,14 @@ final importCommand = ChatCommand(
       "🚴‍♂️ Démarrage du processus d'import...",
     );
 
-    final List<Map<String, dynamic>> lastDoc = await supabase
-        .from(saveCollectionKey)
-        .select()
-        .eq(serverIdKey, parsedArg);
+    final Export? lastSave = await DatabaseService().fetchDocument(
+      saveCollectionKey,
+      serverIdKey,
+      parsedArg,
+      Export.fromJson,
+    );
 
-    if (lastDoc.isEmpty) {
+    if (lastSave == null) {
       await writeMessage(
         context,
         "** ❌ Impossible de récupérer la dernière sauvegarde (sauvegarde inexistante) **",
@@ -92,11 +96,9 @@ final importCommand = ChatCommand(
       return;
     }
 
-    final Map<String, dynamic>? lastSave = lastDoc.firstOrNull;
-    if (lastSave == null) return;
-
     final Encrypter rsaDecrypter = Encrypter(RSA(privateKey: pK));
-    final Encrypted encryptedAesKey = Encrypted.fromBase64(lastSave[encryptedAesKeyKey]!);
+    final Encrypted encryptedAesKey =
+        Encrypted.fromBase64(lastSave.encryptedAesKey);
 
     final String aesKeyBase64 = rsaDecrypter.decrypt(encryptedAesKey);
     final Key decryptedAesKey = Key.fromBase64(aesKeyBase64);
@@ -107,12 +109,12 @@ final importCommand = ChatCommand(
         mode: AESMode.cbc,
       ),
     );
-    final Encrypted encryptedData = Encrypted.fromBase64(lastSave[serverSaveKey]!);
+    final Encrypted encryptedData = Encrypted.fromBase64(lastSave.serverSave);
 
     final String decryptedData = aesDecrypter.decrypt(
       encryptedData,
       iv: IV.fromBase64(
-        lastSave[ivKey]!,
+        lastSave.iv,
       ),
     );
 

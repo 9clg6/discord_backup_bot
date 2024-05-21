@@ -2,10 +2,12 @@ import 'package:collection/collection.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:logger/logger.dart' as logger;
 
+import '../entity/supabase/initialize.dart';
 import '../exceptions/exceptions.dart';
 import '../share/share.constants.dart';
 import '../use_case/enum/parameters.enum.dart';
 import '../utils/printer.util.dart';
+import 'database.service.dart';
 import 'export.service.dart';
 import 'logger.service.dart';
 import 'restartable_timer.dart';
@@ -42,22 +44,22 @@ class CoreService {
     if (_isServerInitMap[serverId] == true) {
       isInit = true;
     } else if (_isServerInitMap[serverId] == null) {
-      final Map<String, dynamic>? lastDoc =
-          (await supabase.from(initCollectionKey).select().eq(
-                    'serverId',
-                    serverId,
-                  ))
-              .firstOrNull;
+      final Initialize? initializeResult =
+          await DatabaseService().fetchDocument<Initialize>(
+        initCollectionKey,
+        serverIdKey,
+        serverId,
+        Initialize.fromJson,
+      );
 
-      if (lastDoc == null) {
+      if (initializeResult == null) {
         isInit = false;
       } else {
-        final bool inter = lastDoc['isInitialized'] as bool;
-
-        if (inter == true && _isServerInitMap[serverId] == null) {
+        if (initializeResult.initValue == true &&
+            _isServerInitMap[serverId] == null) {
           isInit = false;
         } else {
-          isInit = inter;
+          isInit = initializeResult.initValue;
         }
       }
     } else {
@@ -101,13 +103,15 @@ class CoreService {
     String? publicKey,
   }) async {
     try {
-      await supabase.from(initCollectionKey).upsert({
-        "serverId": id,
-        "channelId": channelId,
-        "parameter": code,
-        "isInitialized": initValue ?? true,
-        "publicKey": publicKey,
-      });
+      DatabaseService().saveData(
+        Initialize(
+          id: id,
+          channelId: channelId ?? 0,
+          code: code ?? 0,
+          initValue: initValue ?? false,
+          publicKey: publicKey ?? '',
+        ),
+      );
 
       _isServerInitMap[id] = initValue ?? true;
     } on Exception catch (_) {
@@ -120,48 +124,49 @@ class CoreService {
   ///
   ///TODO REMOVAL NOT WORKING
   Future<void> removeGuild(int serverId) async {
-    return supabase.from(initCollectionKey).delete().eq('serverId', serverId);
+    ///return supabase.from(initCollectionKey).delete().eq('serverId', serverId);
   }
 
   ///
   /// Initialize CRON at bot start
   ///
   Future<void> initializeAtStart(NyxxGateway client) async {
-    final List<Map<String, dynamic>> initializedServer =
-        await supabase.from(initCollectionKey).select();
+    final List<Initialize>? initializedServer =
+        await DatabaseService().fetchDocuments(
+      initCollectionKey,
+      Initialize.fromJson,
+    );
 
-    for (Map<String, dynamic> server in initializedServer) {
-      final int serverId = server["serverId"] as int;
-      final int channelId = server["channelId"] as int;
-      final String publicKey = server["publicKey"] as String;
+    if (initializedServer == null || initializedServer.isEmpty) return;
 
+    for (Initialize server in initializedServer) {
       try {
-        await client.guilds.get(Snowflake.parse(channelId));
+        await client.guilds.get(Snowflake.parse(server.channelId));
       } on Exception catch (_) {
         LoggerService(0).writeLog(
           logger.Level.error,
-          "❌ Le bot n'est plus présent sur ce serveur ($serverId), impossible d'initialiser, suppression de la base (init). ",
+          "❌ Le bot n'est plus présent sur ce serveur (${server.serverId}), impossible d'initialiser, suppression de la base (init). ",
         );
-        await removeGuild(channelId);
+        await removeGuild(server.channelId);
         continue;
       }
 
-      if (!(server["isInitialized"] as bool)) continue;
+      if (!(server.initValue)) continue;
 
       startCron(
-        Parameters.values.firstWhereOrNull(
-                (element) => element.code == server["parameter"] as int) ??
+        Parameters.values
+                .firstWhereOrNull((element) => element.code == server.code) ??
             Parameters.noParameter,
-        serverId,
-        channelId,
-        publicKey: publicKey,
+        server.serverId,
+        server.channelId,
+        publicKey: server.publicKey,
       );
 
-      _isServerInitMap[serverId] = true;
+      _isServerInitMap[server.serverId] = true;
 
       await writeMessageWithChannelId(
-        channelId,
-        serverId,
+        server.channelId,
+        server.serverId,
         "💡 Démarrage du processus de sauvegarde en arrière-plan.",
       );
     }
