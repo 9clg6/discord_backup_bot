@@ -1,4 +1,4 @@
-
+# Discord backup bot with Hybrid Encryption
 
 This bot enables anyone to make backups of their Discord server(s) at configurable frequencies. It can also import these backups to rebuild the servers.
 Backup are encrypted with hybrid encryption (RSA/AES). 
