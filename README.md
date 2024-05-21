@@ -8,7 +8,8 @@ Backup are encrypted with hybrid encryption (RSA/AES).
 ###  Supabase
 
 1. To deploy this bot, you need to set up a [Supabase](https://supabase.com/) database.
-2. Create two collections named : 
+2. Create two collections named :
+   
 	2.1. "**initialization**"
 	
 	It allows you to save the status of your servers, whether they are initialized or not.
