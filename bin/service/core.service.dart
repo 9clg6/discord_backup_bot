@@ -141,6 +141,8 @@ class CoreService {
     if (initializedServer == null || initializedServer.isEmpty) return;
 
     for (Initialize server in initializedServer) {
+      if(!server.isInitialized) return;
+      
       try {
         await client.guilds.get(Snowflake.parse(server.channelId));
       } on Exception catch (_) {
