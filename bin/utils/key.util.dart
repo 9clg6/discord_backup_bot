@@ -20,3 +20,4 @@ String formatPrivatePem(String pem) {
   return _formatPem(
       pem, '-----BEGIN PRIVATE KEY-----', '-----END PRIVATE KEY-----');
 }
+
