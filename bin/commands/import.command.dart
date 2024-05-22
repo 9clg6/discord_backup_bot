@@ -81,6 +81,11 @@ final importCommand = ChatCommand(
       "🚴‍♂️ Démarrage du processus d'import...",
     );
 
+    await writeMessage(
+      context,
+      "** 🔐 POUR UNE QUESTION DE SECURITE VOUS DEVEZ IMPERATIVEMENT GENERER UNE NOUVELLE PAIRE DE CLES RSA POUR VOS PROCHAINES SAUVEGARDES (utilisez les liens et configurations donnés dans le guide**",
+    );
+
     final Export? lastSave = await DatabaseService().fetchDocument(
       saveCollectionKey,
       serverIdKey,
