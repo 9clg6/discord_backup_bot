@@ -1,8 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:supabase/supabase.dart';
 
-import '../share/share.constants.dart';
-
 ///
 /// Database services
 ///
@@ -38,10 +36,16 @@ class DatabaseService {
   ///
   /// Save data
   ///
-  Future<void> saveData<T extends JsonSerializable>(T export) async {
-    await supabase?.from(saveCollectionKey).upsert(export.toJson());
+  Future<void> saveData<T extends JsonSerializable>(
+    T export, {
+    required String collection,
+  }) async {
+    await supabase?.from(collection).upsert(export.toJson());
   }
 
+  ///
+  /// Fetch all documents
+  ///
   Future<List<T>?> fetchDocuments<T extends JsonSerializable>(
     String collectionKey,
     T Function(Map<String, dynamic>) fromJson,
@@ -52,6 +56,9 @@ class DatabaseService {
     return response?.map<T>((json) => fromJson(json)).toList();
   }
 
+  ///
+  ///  Fetch document
+  ///
   Future<T?> fetchDocument<T extends JsonSerializable>(
     String collectionKey,
     String fieldName,

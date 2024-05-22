@@ -28,11 +28,13 @@ final cancelCommand = ChatCommand(
 
       writeMessage(
         context,
-        '😔 Arrêt des services, le back up automatique ne sera plus effectué. Vos sauvegardes restent conservés sans limite de temps.',
+        '😔 Arrêt des services, le back up automatique ne sera plus effectué. Vos sauvegardes restent conservées sans limite de temps.',
       );
     } on Exception catch (e) {
       writeMessage(
-          context, "Le bot n'a pas pu être arrêté dû à une erreur ($e)");
+        context,
+        "La sauvegarde automatique n'a pas pu être arrêté dû à une erreur ($e)",
+      );
 
       LoggerService(serverId).writeLog(
         logger.Level.info,

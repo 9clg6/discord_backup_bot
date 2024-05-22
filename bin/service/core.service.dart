@@ -55,18 +55,18 @@ class CoreService {
       if (initializeResult == null) {
         isInit = false;
       } else {
-        if (initializeResult.initValue == true &&
+        if (initializeResult.isInitialized == true &&
             _isServerInitMap[serverId] == null) {
           isInit = false;
         } else {
-          isInit = initializeResult.initValue;
+          isInit = initializeResult.isInitialized;
         }
       }
     } else {
-      ///TODO CANCEL BACKUP
+      isInit = false;
     }
 
-    return isInit!;
+    return isInit;
   }
 
   void startCron(
@@ -105,12 +105,13 @@ class CoreService {
     try {
       DatabaseService().saveData(
         Initialize(
-          id: id,
+          serverId: id,
           channelId: channelId ?? 0,
-          code: code ?? 0,
-          initValue: initValue ?? false,
+          parameter: code ?? Parameters.noParameter.code,
+          isInitialized: initValue ?? false,
           publicKey: publicKey ?? '',
         ),
+        collection: initCollectionKey,
       );
 
       _isServerInitMap[id] = initValue ?? true;
@@ -151,11 +152,11 @@ class CoreService {
         continue;
       }
 
-      if (!(server.initValue)) continue;
+      if (!(server.isInitialized)) continue;
 
       startCron(
         Parameters.values
-                .firstWhereOrNull((element) => element.code == server.code) ??
+                .firstWhereOrNull((element) => element.code == server.parameter) ??
             Parameters.noParameter,
         server.serverId,
         server.channelId,

@@ -152,6 +152,7 @@ class ExportService {
             iv.base64,
             encryptedData.base64,
           ),
+          collection: saveCollectionKey,
         );
 
         LoggerService(serverId).writeLog(

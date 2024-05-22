@@ -4,26 +4,21 @@ part 'initialize.g.dart';
 ///
 /// [Initialize]
 ///
-@JsonSerializable(
-  fieldRename: FieldRename.snake,
-  explicitToJson: true,
-)
+@JsonSerializable(explicitToJson: true)
 class Initialize extends JsonSerializable {
-  final int id;
+  final int serverId;
   final int channelId;
-  final int code;
-  final bool initValue;
+  final int parameter;
+  final bool isInitialized;
   final String publicKey;
 
   Initialize({
-    required this.id,
+    required this.serverId,
     required this.channelId,
-    required this.code,
-    required this.initValue,
+    required this.parameter,
+    required this.isInitialized,
     required this.publicKey,
   });
-
-  get serverId => null;
 
   @override
   Map<String, dynamic> toJson() => _$InitializeToJson(this);
