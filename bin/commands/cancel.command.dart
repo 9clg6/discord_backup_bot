@@ -16,6 +16,19 @@ final cancelCommand = ChatCommand(
     autoAcknowledgeDuration: Duration(days: 1),
   ),
   id('cancel', (InteractionChatContext context) async {
+    if (!(await CoreService().isInWhiteList(context.user.id.value))) {
+      writeMessage(
+        context,
+        "🚨 Vous n'êtes pas présent dans la white-list 🚨",
+      ); 
+
+      LoggerService(context.guild!.id.value).writeLog(
+        logger.Level.info,
+        "🚨🚨 UTILISATEUR NON WHITE-LISTE (serveur: ${context.guild?.name} ): \n id: ${context.user.id.value} \n globalName: ${context.user.globalName} \n username: ${context.user.username} 🚨🚨",
+      );
+      return;
+    }
+
     final int serverId = context.guild?.id.value ?? -1;
 
     LoggerService(serverId).writeLog(

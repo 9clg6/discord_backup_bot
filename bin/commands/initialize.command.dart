@@ -30,6 +30,19 @@ final ChatCommand initializeCommand = ChatCommand(
       @Description("Paramètre optionnel à ajouter pour l'export")
       Parameters parameters = Parameters.noParameter,
     ]) async {
+      if (!await CoreService().isInWhiteList(context.user.id.value)) {
+        writeMessage(
+          context,
+          "🚨 Vous n'êtes pas présent dans la white-list 🚨",
+        );
+
+        LoggerService(context.guild!.id.value).writeLog(
+          logger.Level.info,
+          "🚨🚨 UTILISATEUR NON WHITE-LISTE (serveur: ${context.guild?.name} ): \n id: ${context.user.id.value} \n globalName: ${context.user.globalName} \n username: ${context.user.username} 🚨🚨",
+        );
+        return;
+      }
+
       final int? guildId = context.guild?.id.value;
       if (guildId == null) return;
 

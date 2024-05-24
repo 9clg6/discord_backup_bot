@@ -7,6 +7,7 @@ import 'package:pointycastle/asymmetric/api.dart';
 
 import '../entity/guild_export.entity.dart';
 import '../entity/supabase/export.dart';
+import '../service/core.service.dart';
 import '../service/database.service.dart';
 import '../service/logger.service.dart';
 import '../share/share.constants.dart';
@@ -36,6 +37,19 @@ final importCommand = ChatCommand(
     @Name('privateKey')
     String privateKey,
   ) async {
+    if (!await CoreService().isInWhiteList(context.user.id.value)) {
+      writeMessage(
+        context,
+        "🚨 Vous n'êtes pas présent dans la white-list 🚨",
+      );
+
+      LoggerService(context.guild!.id.value).writeLog(
+        logger.Level.info,
+        "🚨🚨 UTILISATEUR NON WHITE-LISTE (serveur: ${context.guild?.name} ): \n id: ${context.user.id.value} \n globalName: ${context.user.globalName} \n username: ${context.user.username} 🚨🚨",
+      );
+      return;
+    }
+
     final int serverId = context.guild?.id.value ?? -1;
 
     LoggerService(serverId).writeLog(

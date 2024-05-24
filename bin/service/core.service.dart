@@ -3,6 +3,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:logger/logger.dart' as logger;
 
 import '../entity/supabase/initialize.dart';
+import '../entity/supabase/white_listed_user.dart';
 import '../exceptions/exceptions.dart';
 import '../share/share.constants.dart';
 import '../use_case/enum/parameters.enum.dart';
@@ -121,6 +122,18 @@ class CoreService {
   }
 
   ///
+  /// Is given user white listed
+  ///
+  Future<bool> isInWhiteList(int userId) async {
+    return (await DatabaseService().fetchDocument<WhiteListedUser>(
+      whiteListCollectionKey,
+      userIdWhiteListKey,
+      userId,
+      WhiteListedUser.fromJson,
+    ))?.isWhiteListed ?? false;
+  }
+
+  ///
   /// Remove guild from database
   ///
   ///TODO REMOVAL NOT WORKING
@@ -155,8 +168,8 @@ class CoreService {
       if (!(server.isInitialized)) continue;
 
       startCron(
-        Parameters.values
-                .firstWhereOrNull((element) => element.code == server.parameter) ??
+        Parameters.values.firstWhereOrNull(
+                (element) => element.code == server.parameter) ??
             Parameters.noParameter,
         server.serverId,
         server.channelId,
