@@ -35,8 +35,7 @@ Future<void> main(List<String> arguments) async {
     ),
   );
 
-  //TODO UNCOMMNET
-  //await CoreService().initializeAtStart(client);
+  await CoreService().initializeAtStart(client);
 }
 
 ///
