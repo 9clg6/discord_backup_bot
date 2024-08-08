@@ -157,29 +157,29 @@ class CoreService {
     if (initializedServer == null || initializedServer.isEmpty) return;
 
     for (Initialize server in initializedServer) {
-      // try {
-      //   await client.guilds.get(Snowflake.parse(server.channelId));
-      // } on Exception catch (_) {
-      //   LoggerService(0).writeLog(
-      //     logger.Level.error,
-      //     save: true,
-      //     print: false,
-      //     "❌ Le bot n'est plus présent sur ce serveur (${server.serverId}), impossible d'initialiser, suppression de la base (init). ",
-      //   );
-      //   await removeGuild(server.channelId);
-      //   continue;
-      // }
+      try {
+        await client.guilds.get(Snowflake.parse(server.channelId));
+      } on Exception catch (_) {
+        LoggerService(0).writeLog(
+          logger.Level.error,
+          save: true,
+          print: false,
+          "❌ Le bot n'est plus présent sur ce serveur (${server.serverId}), impossible d'initialiser, suppression de la base (init). ",
+        );
+        await removeGuild(server.channelId);
+        continue;
+      }
 
-      // if (!(server.isInitialized)) continue;
+      if (!(server.isInitialized)) continue;
 
-      // startCron(
-      //   Parameters.values.firstWhereOrNull(
-      //           (element) => element.code == server.parameter) ??
-      //       Parameters.noParameter,
-      //   server.serverId,
-      //   server.channelId,
-      //   publicKey: server.publicKey,
-      // );
+      startCron(
+        Parameters.values.firstWhereOrNull(
+                (element) => element.code == server.parameter) ??
+            Parameters.noParameter,
+        server.serverId,
+        server.channelId,
+        publicKey: server.publicKey,
+      );
 
       final ChangeLogService changeLogService = ChangeLogService(
         server.serverId,
