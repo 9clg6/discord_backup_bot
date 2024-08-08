@@ -36,34 +36,44 @@ class LoggerService {
     Level level,
     String content, {
     bool save = true,
+    bool print = true,
   }) {
     switch (level) {
       case Level.debug:
         if (save) {
           return _l.d(content);
         }
-        return _lNoSave.d(content);
+        if (print) {
+          return _lNoSave.d(content);
+        }
       case Level.info:
         if (save) {
           return _l.i(content);
         }
-        return _lNoSave.i(content);
+        if (print) {
+          return _lNoSave.i(content);
+        }
       case Level.warning:
         if (save) {
           return _l.w(content);
         }
-        return _lNoSave.w(content);
+        if (print) {
+          return _lNoSave.w(content);
+        }
       case Level.error:
         if (save) {
           return _l.e(content);
         }
-        return _lNoSave.e(content);
-
+        if (print) {
+          return _lNoSave.e(content);
+        }
       default:
         if (save) {
           return _l.i(content);
         }
-        return _lNoSave.i(content);
+        if (print) {
+          return _lNoSave.i(content);
+        }
     }
   }
 }

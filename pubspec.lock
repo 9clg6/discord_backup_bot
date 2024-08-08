@@ -372,12 +372,11 @@ packages:
   nyxx:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "patch/hang-status"
-      resolved-ref: "4a54601fc89395cf5b3970cc6ed5156e14de4ea0"
-      url: "https://github.com/abitofevrything/nyxx.git"
-    source: git
-    version: "6.2.1"
+      name: nyxx
+      sha256: "589b4864f72379c66cd2953645d5a79dc6d6d468638d5dc2908c2c48a37c4c6c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.1"
   nyxx_commands:
     dependency: "direct main"
     description:
@@ -391,7 +390,7 @@ packages:
     description:
       path: "."
       ref: dev
-      resolved-ref: d560a924bc0dd6d9e050dd5dae2f0e359bb1cfdd
+      resolved-ref: f88e0f74c78d8d29fccd854cbc2d5384de639e69
       url: "https://github.com/nyxx-discord/nyxx_extensions.git"
     source: git
     version: "4.1.0"

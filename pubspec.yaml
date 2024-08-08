@@ -7,10 +7,7 @@ environment:
   sdk: ^3.2.6
 
 dependencies:
-  nyxx:
-    git:
-      url: https://github.com/abitofevrything/nyxx.git
-      ref: patch/hang-status
+  nyxx: ^6.3.1
   json_annotation: ^4.8.1
   nyxx_extensions:
     git:
@@ -23,11 +20,6 @@ dependencies:
   logger: ^2.2.0
   encrypt: ^5.0.3
   pointycastle: ^3.9.1
-dependency_overrides:
-  nyxx: 
-    git:
-      url: https://github.com/abitofevrything/nyxx.git
-      ref: patch/hang-status
 
 dev_dependencies:
   lints: ^2.1.0

@@ -37,16 +37,48 @@ class FetchChannelsUseCase {
       }
 
       List<UserMessage>? messages;
+
+      LoggerService(
+        guild.id.value,
+      ).writeLog(
+        logger.Level.info,
+        print: false,
+        "📑 Récupération des permissions de channels (${guildChan.name})",
+      );
+
       List<CustomChanPerm> permissions =
           FetchChannelPermissionsUseCase.fetchChanPermission(
         guildChan,
         guild.id.value,
       );
 
+      LoggerService(
+        guild.id.value,
+      ).writeLog(
+        logger.Level.info,
+        print: false,
+        "📑✅ Récupération des permissions de channels OK",
+      );
+
       if (guildChan.type == ChannelType.guildText && !noMessageSave) {
+        LoggerService(
+          guild.id.value,
+        ).writeLog(
+          logger.Level.info,
+          print: false,
+          "📑 Récupération des messages du channel (${guildChan.name})",
+        );
         messages = await FetchAllMessagesFromChannelUseCase.execute(
           guildChan,
           guild.id.value,
+        );
+
+        LoggerService(
+          guild.id.value,
+        ).writeLog(
+          logger.Level.info,
+          print: false,
+          "📑✅ Récupération des messages du channel OK",
         );
       }
 
@@ -64,6 +96,15 @@ class FetchChannelsUseCase {
     }).toList();
 
     final List<CustomChan?> exportedChans = await Future.wait(futures);
+
+    LoggerService(
+      guild.id.value,
+    ).writeLog(
+      logger.Level.info,
+      print: false,
+      "📑✅ Channels récupérés",
+    );
+
     return exportedChans.whereType<CustomChan>().toList()
       ..sort((a, b) => a.position.compareTo(b.position));
   }

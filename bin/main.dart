@@ -24,7 +24,7 @@ Future<void> main(List<String> arguments) async {
 
   client = await Nyxx.connectGateway(
     env[discordApiKeyKey] ?? '',
-    GatewayIntents.allPrivileged,
+    GatewayIntents.none,
     options: GatewayClientOptions(
       plugins: [
         commands,
@@ -35,7 +35,8 @@ Future<void> main(List<String> arguments) async {
     ),
   );
 
-  await CoreService().initializeAtStart(client);
+  //TODO UNCOMMNET
+  //await CoreService().initializeAtStart(client);
 }
 
 ///
