@@ -1,7 +1,7 @@
-## 1.0.0
+## 1.0.1
 
-- Logging i.
-
+- Logger enhancements
+- Change to Nyxx main branch (fix message parsing due to Discord data model change)
 
 ## 1.0.0
 

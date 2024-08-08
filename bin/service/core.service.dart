@@ -8,6 +8,7 @@ import '../exceptions/exceptions.dart';
 import '../share/share.constants.dart';
 import '../use_case/enum/parameters.enum.dart';
 import '../utils/printer.util.dart';
+import 'changelog.service.dart';
 import 'database.service.dart';
 import 'export.service.dart';
 import 'logger.service.dart';
@@ -126,11 +127,13 @@ class CoreService {
   ///
   Future<bool> isInWhiteList(int userId) async {
     return (await DatabaseService().fetchDocument<WhiteListedUser>(
-      whiteListCollectionKey,
-      userIdWhiteListKey,
-      userId,
-      WhiteListedUser.fromJson,
-    ))?.isWhiteListed ?? false;
+          whiteListCollectionKey,
+          userIdWhiteListKey,
+          userId,
+          WhiteListedUser.fromJson,
+        ))
+            ?.isWhiteListed ??
+        false;
   }
 
   ///
@@ -154,27 +157,46 @@ class CoreService {
     if (initializedServer == null || initializedServer.isEmpty) return;
 
     for (Initialize server in initializedServer) {
-      try {
-        await client.guilds.get(Snowflake.parse(server.channelId));
-      } on Exception catch (_) {
-        LoggerService(0).writeLog(
-          logger.Level.error,
-          "❌ Le bot n'est plus présent sur ce serveur (${server.serverId}), impossible d'initialiser, suppression de la base (init). ",
-        );
-        await removeGuild(server.channelId);
-        continue;
-      }
+      // try {
+      //   await client.guilds.get(Snowflake.parse(server.channelId));
+      // } on Exception catch (_) {
+      //   LoggerService(0).writeLog(
+      //     logger.Level.error,
+      //     save: true,
+      //     print: false,
+      //     "❌ Le bot n'est plus présent sur ce serveur (${server.serverId}), impossible d'initialiser, suppression de la base (init). ",
+      //   );
+      //   await removeGuild(server.channelId);
+      //   continue;
+      // }
 
-      if (!(server.isInitialized)) continue;
+      // if (!(server.isInitialized)) continue;
 
-      startCron(
-        Parameters.values.firstWhereOrNull(
-                (element) => element.code == server.parameter) ??
-            Parameters.noParameter,
+      // startCron(
+      //   Parameters.values.firstWhereOrNull(
+      //           (element) => element.code == server.parameter) ??
+      //       Parameters.noParameter,
+      //   server.serverId,
+      //   server.channelId,
+      //   publicKey: server.publicKey,
+      // );
+
+      final ChangeLogService changeLogService = ChangeLogService(
         server.serverId,
         server.channelId,
-        publicKey: server.publicKey,
-      );
+      )..getLatestChangelog();
+
+      final String? lastVersionSeen = await changeLogService.fetchVersion();
+
+      if (lastVersionSeen == null ||
+          changeLogService.currentVersion != lastVersionSeen) {
+        await writeMessageWithChannelId(
+          server.channelId,
+          server.serverId,
+          changeLogService.changelog.toString(),
+        );
+        changeLogService.saveState();
+      }
 
       _isServerInitMap[server.serverId] = true;
 
